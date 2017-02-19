@@ -14,6 +14,7 @@ use eZ\Publish\API\Repository\ContentTypeService;
 use eZ\Publish\API\Repository\LocationService;
 use EzSystems\RepositoryForms\Data\Content\CreateContentDraftData;
 use EzSystems\RepositoryForms\Data\Mapper\ContentCreateMapper;
+use EzSystems\RepositoryForms\Data\Mapper\ContentUpdateMapper;
 use EzSystems\RepositoryForms\Form\ActionDispatcher\ActionDispatcherInterface;
 use EzSystems\RepositoryForms\Form\Type\Content\ContentDraftCreateType;
 use EzSystems\RepositoryForms\Form\Type\Content\ContentEditType;
@@ -123,15 +124,56 @@ class ContentEditController extends Controller
         $form->handleRequest($request);
 
         if ($form->isValid()) {
-            $this->contentService->createContentDraft(
-                $contentInfo,
-                $this->contentService->loadVersionInfo($contentInfo, $fromVersionNo)
-            );
+            $this->contentActionDispatcher->dispatchFormAction($form, $createContentDraft, $form->getClickedButton()->getName());
+            if ($response = $this->contentActionDispatcher->getResponse()) {
+                return $response;
+            }
         }
 
         return $this->render('@EzSystemsRepositoryForms/Content/content_create_draft.html.twig', [
             'form' => $form->createView(),
-            //'languageCode' => $language,
+            'pagelayout' => $this->pagelayout,
+        ]);
+    }
+
+    /**
+     * Shows a content draft editing form.
+     *
+     * @param int $contentId ContentType id to create
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param string $language Language code to create the version in (eng-GB, ger-DE, ...))
+     * @param int $versionNo Version number the version should be created from. Defaults to the currently published one.
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function editContentDraftAction($contentId, $versionNo = null, Request $request, $language = null)
+    {
+        // Q: What is the object we want to pass to the ContentUpdate form ?
+        // Q: What do we get when the form is submitted ?
+        // If we go the same way than with ContentCreate without a draft, we will be getting a
+        // ContentUpdateStruct (it gets a ContentUpdateStruct).
+        $draft = $this->contentService->loadContent($contentId, [$language], $versionNo);
+
+        $contentUpdate = (new ContentUpdateMapper())->mapToFormData(
+            $draft,
+            [
+                'languageCode' => $language,
+                'contentType' => $this->contentTypeService->loadContentType($draft->contentInfo->contentTypeId),
+            ]
+        );
+        $form = $this->createForm(ContentEditType::class, $contentUpdate, ['languageCode' => $language]);
+        $form->handleRequest($request);
+
+        if ($form->isValid()) {
+            $this->contentActionDispatcher->dispatchFormAction($form, $contentUpdate, $form->getClickedButton()->getName());
+            if ($response = $this->contentActionDispatcher->getResponse()) {
+                return $response;
+            }
+        }
+
+        return $this->render('EzSystemsRepositoryFormsBundle:Content:content_edit.html.twig', [
+            'form' => $form->createView(),
+            'languageCode' => $language,
             'pagelayout' => $this->pagelayout,
         ]);
     }
