@@ -12,6 +12,8 @@ use eZ\Bundle\EzPublishCoreBundle\Controller;
 use eZ\Publish\API\Repository\ContentService;
 use eZ\Publish\API\Repository\ContentTypeService;
 use eZ\Publish\API\Repository\LocationService;
+use eZ\Publish\API\Repository\Values\Content\VersionInfo;
+use eZ\Publish\Core\Base\Exceptions\BadStateException;
 use EzSystems\RepositoryForms\Data\Content\CreateContentDraftData;
 use EzSystems\RepositoryForms\Data\Mapper\ContentCreateMapper;
 use EzSystems\RepositoryForms\Data\Mapper\ContentUpdateMapper;
@@ -140,19 +142,19 @@ class ContentEditController extends Controller
      * Shows a content draft editing form.
      *
      * @param int $contentId ContentType id to create
+     * @param int $versionNo Version number the version should be created from. Defaults to the currently published one.
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @param string $language Language code to create the version in (eng-GB, ger-DE, ...))
-     * @param int $versionNo Version number the version should be created from. Defaults to the currently published one.
      *
      * @return \Symfony\Component\HttpFoundation\Response
+     * @throws \eZ\Publish\Core\Base\Exceptions\BadStateException If the version isn't editable, or if there is no editable version.
      */
     public function editContentDraftAction($contentId, $versionNo = null, Request $request, $language = null)
     {
-        // Q: What is the object we want to pass to the ContentUpdate form ?
-        // Q: What do we get when the form is submitted ?
-        // If we go the same way than with ContentCreate without a draft, we will be getting a
-        // ContentUpdateStruct (it gets a ContentUpdateStruct).
         $draft = $this->contentService->loadContent($contentId, [$language], $versionNo);
+        if (!$draft->getVersionInfo()->status !== VersionInfo::STATUS_DRAFT) {
+            throw new BadStateException('Version status', 'status is not draft');
+        }
 
         $contentUpdate = (new ContentUpdateMapper())->mapToFormData(
             $draft,
