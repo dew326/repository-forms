@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>create folder</title>
+    <meta name="viewport" content="width=device-width">
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react-dom.js"></script>
+	<script src="https://unpkg.com/react-jsonschema-form/dist/react-jsonschema-form.js"></script>
+
+	<style>
+		#app {
+			width: 25%;
+			padding: 2rem;
+		}
+	</style>
+</head>
+<body>
+<button id="get-form">get form</button>
+<div id="app"></div>
+
+<script>
+	const Form = JSONSchemaForm.default;
+	const jsonEndpoint = 'content/create/nodraft/folder/eng-GB/2.json';
+
+	document.querySelector('#get-form').addEventListener('click', function () {
+		fetch(jsonEndpoint)
+			.then(function (response) {
+				return response.json()
+			})
+			.then(function (schema) {
+				ReactDOM.render(
+					React.createElement(Form, {
+						schema: schema,
+						onSubmit: function (event) {
+							console.log(event)
+
+							var headers = new Headers({
+								"Content-Type": "application/json"
+							})
+
+							fetch(jsonEndpoint, {
+								method: "POST",
+								headers: headers,
+								credentials: 'include',
+								body: JSON.stringify(event.formData)
+							})
+						}
+					}),
+					document.getElementById("app")
+				);
+			})
+	}, false)
+</script>
+
+</body>
+</html>

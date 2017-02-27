@@ -65,6 +65,8 @@ parameters:
 
     ezrepoforms.user_content_type_identifier: "user"
 
+    ezsystems.repoforms.controller.proto.class: EzSystems\RepositoryFormsBundle\Controller\ProtoController
+
 services:
     # deprecated in 1.1, will be removed in 2.0
     ezrepoforms.field_type_form_mapper.registry:
@@ -386,3 +388,7 @@ services:
 
     ezrepoforms.liform.validation_extension:
         class: EzSystems\RepositoryForms\LiForm\ValidationExtension
+
+    ezsystems.repoforms.controller.proto:
+        class: "%ezsystems.repoforms.controller.proto.class%"
+        parent: ezsystems.platformui.controller.base

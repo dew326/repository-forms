@@ -31,3 +31,8 @@ ez_user_register_confirmation:
   defaults:
       _controller: "ezrepoforms.controller.user_register:registerConfirmAction"
 
+proto_create-folder:
+    path: /create-folder
+    defaults:
+        _controller: ezsystems.repoforms.controller.proto:createFolderAction
+    methods: [GET]
